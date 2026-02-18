@@ -4,9 +4,10 @@ import { getBadgeDefs, type GameState } from '@/lib/gameState';
 
 interface Props {
   state: GameState;
+  onClose?: () => void;
 }
 
-export default function BadgesPanel({ state }: Props) {
+export default function BadgesPanel({ state, onClose }: Props) {
   const defs = getBadgeDefs();
   const unlockedCount = defs.filter(b => state.badges[b.id]).length;
 
@@ -15,9 +16,20 @@ export default function BadgesPanel({ state }: Props) {
       {/* Header */}
       <div className="bg-white/70 backdrop-blur rounded-3xl p-4 shadow-lg border-2 border-yellow-200 flex items-center justify-between">
         <h2 className="font-black text-yellow-700 text-lg">🏅 Badges</h2>
-        <span className="font-black text-yellow-600 text-sm bg-yellow-100 border border-yellow-300 px-3 py-1 rounded-full">
-          {unlockedCount}/{defs.length}
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="font-black text-yellow-600 text-sm bg-yellow-100 border border-yellow-300 px-3 py-1 rounded-full">
+            {unlockedCount}/{defs.length}
+          </span>
+          {onClose && (
+            <button
+              onClick={onClose}
+              aria-label="Close badges"
+              className="w-8 h-8 flex items-center justify-center rounded-full bg-yellow-100 hover:bg-yellow-200 text-yellow-600 font-black text-lg transition-all active:scale-90"
+            >
+              ✕
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="space-y-3">

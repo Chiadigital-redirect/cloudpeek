@@ -4,6 +4,7 @@ import { CLOUD_TYPES, type GameState } from '@/lib/gameState';
 
 interface Props {
   state: GameState;
+  onClose?: () => void;
 }
 
 const RARITY_COLOR: Record<string, string> = {
@@ -18,7 +19,7 @@ const RARITY_GLOW: Record<string, string> = {
   rare:     'shadow-purple-300',
 };
 
-export default function CloudCollection({ state }: Props) {
+export default function CloudCollection({ state, onClose }: Props) {
   const found = Object.keys(state.discovered).length;
   const total = CLOUD_TYPES.length;
   const pct   = Math.round((found / total) * 100);
@@ -30,9 +31,20 @@ export default function CloudCollection({ state }: Props) {
       <div className="bg-white/70 backdrop-blur rounded-3xl p-4 shadow-lg border-2 border-sky-200">
         <div className="flex items-center justify-between mb-3">
           <h2 className="font-black text-sky-700 text-lg">☁️ Cloud Collection</h2>
-          <span className="font-black text-sky-600 text-sm bg-sky-100 border border-sky-300 px-3 py-1 rounded-full">
-            {found}/{total}
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="font-black text-sky-600 text-sm bg-sky-100 border border-sky-300 px-3 py-1 rounded-full">
+              {found}/{total}
+            </span>
+            {onClose && (
+              <button
+                onClick={onClose}
+                aria-label="Close collection"
+                className="w-8 h-8 flex items-center justify-center rounded-full bg-sky-100 hover:bg-sky-200 text-sky-600 font-black text-lg transition-all active:scale-90"
+              >
+                ✕
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Progress bar */}
