@@ -1,10 +1,22 @@
 'use client';
 
+import { useUser, SignUpButton } from '@clerk/nextjs';
+import { useEffect } from 'react';
+
 interface Props {
   onDismiss: () => void;
 }
 
 export default function FreemiumGate({ onDismiss }: Props) {
+  const { isSignedIn } = useUser();
+
+  // If user is already signed in, dismiss the gate automatically
+  useEffect(() => {
+    if (isSignedIn) {
+      onDismiss();
+    }
+  }, [isSignedIn, onDismiss]);
+
   const handleMaybeLater = () => {
     // Dismiss for this session only
     try {
@@ -14,6 +26,9 @@ export default function FreemiumGate({ onDismiss }: Props) {
     }
     onDismiss();
   };
+
+  // Don't render if signed in
+  if (isSignedIn) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center p-4 pb-8 sm:items-center">
@@ -58,12 +73,11 @@ export default function FreemiumGate({ onDismiss }: Props) {
 
           {/* Actions */}
           <div className="space-y-2 pt-1">
-            <a
-              href="/signup"
-              className="block w-full py-4 rounded-2xl bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 active:scale-95 text-white font-black text-lg text-center shadow-lg transition-all"
-            >
-              ✨ Sign Up Free
-            </a>
+            <SignUpButton mode="redirect" fallbackRedirectUrl="/">
+              <button className="block w-full py-4 rounded-2xl bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 active:scale-95 text-white font-black text-lg text-center shadow-lg transition-all">
+                ✨ Sign Up Free
+              </button>
+            </SignUpButton>
             <button
               onClick={handleMaybeLater}
               className="w-full py-3 rounded-2xl text-sky-500 font-bold text-sm hover:bg-sky-50 active:scale-95 transition-all"

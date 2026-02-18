@@ -4,6 +4,9 @@ import { useEffect, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { recordSpot, type Rarity } from '@/lib/gameState';
 import { useConfetti } from './useConfetti';
+import { useUser } from '@clerk/nextjs';
+import { useMutation } from 'convex/react';
+import { api } from '@/convex/_generated/api';
 
 const FreemiumGate = dynamic(() => import('./FreemiumGate'), { ssr: false });
 
@@ -79,6 +82,9 @@ export default function CloudResult({ data, onReset, onStateChange }: Props) {
   const [showGate, setShowGate] = useState(false);
   const fired = useRef(false);
 
+  const { user, isSignedIn } = useUser();
+  const saveScanMutation = useMutation(api.scans.saveScan);
+
   useEffect(() => {
     if (fired.current || !data.found) return;
     fired.current = true;
@@ -102,11 +108,23 @@ export default function CloudResult({ data, onReset, onStateChange }: Props) {
 
     onStateChange();
 
-    // Freemium gate: increment scan count, show gate after first scan if not session-dismissed
-    const newCount = incrementScanCount();
-    if (newCount >= 1 && !isSessionDismissed()) {
-      // Delay the gate so user sees their result first
-      setTimeout(() => setShowGate(true), 1800);
+    // Save to Convex if signed in
+    if (isSignedIn && user?.id) {
+      saveScanMutation({
+        clerkId: user.id,
+        cloudType: data.cloudType,
+        emoji: data.emoji,
+        rarity: data.rarity,
+        points: pointsEarned,
+      }).catch(console.error);
+    }
+
+    // Freemium gate: only show if NOT signed in
+    if (!isSignedIn) {
+      const newCount = incrementScanCount();
+      if (newCount >= 1 && !isSessionDismissed()) {
+        setTimeout(() => setShowGate(true), 1800);
+      }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

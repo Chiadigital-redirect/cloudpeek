@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { loadState, type GameState } from '@/lib/gameState';
+import { useUser, UserButton, SignInButton } from '@clerk/nextjs';
 
 // Dynamic imports (avoid SSR for client-only components)
 const AnimatedClouds  = dynamic(() => import('@/components/AnimatedClouds'),  { ssr: false });
@@ -17,6 +18,7 @@ type Tab    = 'identify' | 'collect' | 'badges';
 type Phase  = 'idle' | 'preview' | 'loading' | 'result';
 
 export default function HomePage() {
+  const { isSignedIn } = useUser();
   const [tab,          setTab]         = useState<Tab>('identify');
   const [phase,        setPhase]       = useState<Phase>('idle');
   const [imageBase64,  setImageBase64] = useState<string>('');
@@ -82,13 +84,28 @@ export default function HomePage() {
       <div className="relative z-10 flex flex-col min-h-dvh">
 
         {/* ── Header ──────────────────────────────────────────────────────── */}
-        <header className="pt-safe pt-4 px-4 pb-2 text-center">
-          <h1 className="text-4xl font-black text-sky-700 drop-shadow-sm tracking-tight">
-            Cloud<span className="text-blue-500">Peek</span> 🌤️
-          </h1>
-          <p className="text-sky-600 font-semibold text-sm mt-0.5">
-            Point at the sky &amp; discover your cloud!
-          </p>
+        <header className="pt-safe pt-4 px-4 pb-2">
+          <div className="flex items-center justify-between max-w-sm mx-auto">
+            <div className="flex-1 text-center">
+              <h1 className="text-4xl font-black text-sky-700 drop-shadow-sm tracking-tight">
+                Cloud<span className="text-blue-500">Peek</span> 🌤️
+              </h1>
+              <p className="text-sky-600 font-semibold text-sm mt-0.5">
+                Point at the sky &amp; discover your cloud!
+              </p>
+            </div>
+            <div className="absolute right-4">
+              {isSignedIn ? (
+                <UserButton afterSignOutUrl="/" />
+              ) : (
+                <SignInButton mode="redirect" fallbackRedirectUrl="/">
+                  <button className="text-xs font-bold text-sky-600 bg-white/60 px-3 py-1.5 rounded-xl border border-sky-200 hover:bg-white/80 transition-all">
+                    Sign In
+                  </button>
+                </SignInButton>
+              )}
+            </div>
+          </div>
         </header>
 
         {/* ── Stats bar (always visible) ───────────────────────────────────── */}
