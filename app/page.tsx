@@ -18,7 +18,7 @@ type Tab    = 'identify' | 'collect' | 'badges';
 type Phase  = 'idle' | 'preview' | 'loading' | 'result';
 
 export default function HomePage() {
-  const { isSignedIn } = useUser();
+  const { isSignedIn, user } = useUser();
   const [tab,          setTab]         = useState<Tab>('identify');
   const [phase,        setPhase]       = useState<Phase>('idle');
   const [imageBase64,  setImageBase64] = useState<string>('');
@@ -192,7 +192,11 @@ export default function HomePage() {
           {/* COLLECTION TAB */}
           {tab === 'collect' && gameState && (
             <div className="pt-2">
-              <CloudCollection state={gameState} onClose={() => setTab('identify')} />
+              <CloudCollection
+                state={gameState}
+                clerkId={isSignedIn && user?.id ? user.id : undefined}
+                onClose={() => setTab('identify')}
+              />
             </div>
           )}
 

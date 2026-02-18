@@ -78,6 +78,7 @@ export default function CloudResult({ data, onReset, onStateChange }: Props) {
   const [scorePopVisible, setScorePopVisible] = useState(false);
   const [scorePopValue, setScorePopValue] = useState(0);
   const [newBadges, setNewBadges] = useState<{ id: string; name: string; emoji: string; description: string }[]>([]);
+  const [dismissedBadgeIds, setDismissedBadgeIds] = useState<Set<string>>(new Set());
   const [isNewDiscovery, setIsNewDiscovery] = useState(false);
   const [showGate, setShowGate] = useState(false);
   const fired = useRef(false);
@@ -113,9 +114,13 @@ export default function CloudResult({ data, onReset, onStateChange }: Props) {
       saveScanMutation({
         clerkId: user.id,
         cloudType: data.cloudType,
+        cloudId: data.cloudId,
         emoji: data.emoji,
+        description: data.description,
         rarity: data.rarity,
         points: pointsEarned,
+        mood: data.mood,
+        funFacts: data.funFacts,
       }).catch(console.error);
     }
 
@@ -128,6 +133,12 @@ export default function CloudResult({ data, onReset, onStateChange }: Props) {
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const handleDismissBadge = (badgeId: string) => {
+    setDismissedBadgeIds(prev => new Set(prev).add(badgeId));
+  };
+
+  const visibleBadges = newBadges.filter(b => !dismissedBadgeIds.has(b.id));
 
   if (!data.found) {
     return (
@@ -173,18 +184,25 @@ export default function CloudResult({ data, onReset, onStateChange }: Props) {
       )}
 
       {/* New badge toasts */}
-      {newBadges.map((badge, i) => (
+      {visibleBadges.map((badge, i) => (
         <div
           key={badge.id}
-          className="badge-pulse fixed top-6 inset-x-4 z-50 mx-auto max-w-sm"
+          className="badge-pulse fixed inset-x-4 z-50 mx-auto max-w-sm"
           style={{ top: `${1.5 + i * 5}rem`, animation: `bounceIn 0.5s ${i * 0.3}s both` }}
         >
           <div className="bg-yellow-400 text-white rounded-2xl px-4 py-3 shadow-xl flex items-center gap-3 border-2 border-yellow-300">
             <span className="text-3xl">{badge.emoji}</span>
-            <div>
+            <div className="flex-1 min-w-0">
               <p className="font-black text-sm">Badge Unlocked! 🎉</p>
               <p className="font-bold text-xs opacity-90">{badge.name} — {badge.description}</p>
             </div>
+            <button
+              onClick={() => handleDismissBadge(badge.id)}
+              aria-label="Dismiss badge notification"
+              className="w-7 h-7 flex-shrink-0 flex items-center justify-center rounded-full bg-yellow-300 hover:bg-yellow-200 text-yellow-800 font-black text-sm transition-all active:scale-90"
+            >
+              ✕
+            </button>
           </div>
         </div>
       ))}
