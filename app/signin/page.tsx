@@ -1,22 +1,22 @@
-import { SignUp } from '@clerk/nextjs';
+import { SignIn } from '@clerk/nextjs';
 
-export default function SignUpPage() {
+export default function SignInPage() {
   return (
     <div className="min-h-dvh flex flex-col items-center justify-center bg-gradient-to-b from-sky-200 to-blue-100 px-4 py-8">
       {/* Header */}
       <div className="text-center mb-6">
-        <div className="text-6xl mb-2">🌤️</div>
+        <div className="text-6xl mb-2">☁️</div>
         <h1 className="text-3xl font-black text-sky-700">
           Cloud<span className="text-blue-500">Peek</span>
         </h1>
         <p className="text-sky-600 font-semibold mt-1 text-sm">
-          Join to save your cloud collection!
+          Welcome back, cloud spotter!
         </p>
       </div>
 
-      {/* Clerk SignUp component wrapped in sky-blue styling */}
+      {/* Clerk SignIn component wrapped in sky-blue styling */}
       <div className="w-full max-w-md">
-        <SignUp
+        <SignIn
           appearance={{
             elements: {
               rootBox: 'w-full',
@@ -31,22 +31,8 @@ export default function SignUpPage() {
             },
           }}
           redirectUrl="/"
-          afterSignUpUrl="/"
+          afterSignInUrl="/"
         />
-      </div>
-
-      {/* Perks reminder */}
-      <div className="mt-6 w-full max-w-sm space-y-2">
-        {[
-          { emoji: '☁️', text: 'Unlimited cloud scans' },
-          { emoji: '🏅', text: 'Save your badges & collection' },
-          { emoji: '🔥', text: 'Track your spotting streak' },
-        ].map(perk => (
-          <div key={perk.text} className="flex items-center gap-3 bg-white/60 backdrop-blur rounded-2xl px-4 py-2 border border-white/80">
-            <span className="text-xl">{perk.emoji}</span>
-            <p className="text-sky-700 font-semibold text-sm">{perk.text}</p>
-          </div>
-        ))}
       </div>
     </div>
   );
