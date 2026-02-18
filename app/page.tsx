@@ -175,14 +175,14 @@ export default function HomePage() {
           {/* COLLECTION TAB */}
           {tab === 'collect' && gameState && (
             <div className="pt-2">
-              <CloudCollection state={gameState} />
+              <CloudCollection state={gameState} onClose={() => setTab('identify')} />
             </div>
           )}
 
           {/* BADGES TAB */}
           {tab === 'badges' && gameState && (
             <div className="pt-2">
-              <BadgesPanel state={gameState} />
+              <BadgesPanel state={gameState} onClose={() => setTab('identify')} />
             </div>
           )}
         </main>

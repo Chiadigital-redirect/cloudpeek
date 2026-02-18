@@ -1,8 +1,40 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import dynamic from 'next/dynamic';
 import { recordSpot, type Rarity } from '@/lib/gameState';
 import { useConfetti } from './useConfetti';
+
+const FreemiumGate = dynamic(() => import('./FreemiumGate'), { ssr: false });
+
+const SCAN_COUNT_KEY = 'cloudpeek_scan_count';
+const SESSION_DISMISSED_KEY = 'cloudpeek_gate_dismissed';
+
+function getScanCount(): number {
+  try {
+    return parseInt(localStorage.getItem(SCAN_COUNT_KEY) ?? '0', 10) || 0;
+  } catch {
+    return 0;
+  }
+}
+
+function incrementScanCount(): number {
+  try {
+    const next = getScanCount() + 1;
+    localStorage.setItem(SCAN_COUNT_KEY, String(next));
+    return next;
+  } catch {
+    return 1;
+  }
+}
+
+function isSessionDismissed(): boolean {
+  try {
+    return sessionStorage.getItem(SESSION_DISMISSED_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
 
 interface CloudData {
   cloudType: string;
@@ -44,6 +76,7 @@ export default function CloudResult({ data, onReset, onStateChange }: Props) {
   const [scorePopValue, setScorePopValue] = useState(0);
   const [newBadges, setNewBadges] = useState<{ id: string; name: string; emoji: string; description: string }[]>([]);
   const [isNewDiscovery, setIsNewDiscovery] = useState(false);
+  const [showGate, setShowGate] = useState(false);
   const fired = useRef(false);
 
   useEffect(() => {
@@ -68,6 +101,13 @@ export default function CloudResult({ data, onReset, onStateChange }: Props) {
     }, 600);
 
     onStateChange();
+
+    // Freemium gate: increment scan count, show gate after first scan if not session-dismissed
+    const newCount = incrementScanCount();
+    if (newCount >= 1 && !isSessionDismissed()) {
+      // Delay the gate so user sees their result first
+      setTimeout(() => setShowGate(true), 1800);
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -102,6 +142,8 @@ export default function CloudResult({ data, onReset, onStateChange }: Props) {
 
   return (
     <div className="w-full max-w-sm mx-auto space-y-5 relative">
+      {/* Freemium gate overlay */}
+      {showGate && <FreemiumGate onDismiss={() => setShowGate(false)} />}
 
       {/* Score pop */}
       {scorePopVisible && (
