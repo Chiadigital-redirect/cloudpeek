@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import { Nunito } from 'next/font/google';
 import { ClerkProvider } from '@clerk/nextjs';
 import { ConvexClientProvider } from './ConvexClientProvider';
+import UserSync from '@/components/UserSync';
 import './globals.css';
 
 const nunito = Nunito({
@@ -34,6 +35,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <html lang="en" className={nunito.variable}>
         <body className={`${nunito.className} antialiased`}>
           <ConvexClientProvider>
+            <UserSync />
             {children}
           </ConvexClientProvider>
         </body>
