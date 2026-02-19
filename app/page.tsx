@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import { loadState, type GameState } from '@/lib/gameState';
 import { useUser, UserButton, SignInButton } from '@clerk/nextjs';
@@ -42,6 +42,15 @@ export default function HomePage() {
     setError('');
   }, []);
 
+  const identifyBtnRef = useRef<HTMLButtonElement>(null);
+
+  // Scroll the identify button into view when a photo is ready
+  useEffect(() => {
+    if (phase === 'preview' && identifyBtnRef.current) {
+      identifyBtnRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, [phase]);
+
   const handleIdentify = useCallback(async () => {
     if (!imageBase64) return;
     setPhase('loading');
@@ -53,11 +62,24 @@ export default function HomePage() {
         headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify({ imageBase64 }),
       });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        setError((err as { error?: string }).error || 'Something went wrong — try again! 🌧️');
+        setPhase('preview');
+        return;
+      }
+
       const data = await res.json();
+      if ((data as { error?: string }).error) {
+        setError((data as { error: string }).error);
+        setPhase('preview');
+        return;
+      }
       setCloudData(data);
       setPhase('result');
     } catch {
-      setError('Uh oh! Something went wrong. Please try again 🌧️');
+      setError('Connection error — check your signal and try again 🌧️');
       setPhase('preview');
     }
   }, [imageBase64]);
@@ -167,6 +189,7 @@ export default function HomePage() {
                     </div>
                   )}
                   <button
+                    ref={identifyBtnRef}
                     onClick={handleIdentify}
                     className="w-full py-5 rounded-2xl bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 active:scale-95 text-white font-black text-xl shadow-xl transition-all flex items-center justify-center gap-2"
                   >
