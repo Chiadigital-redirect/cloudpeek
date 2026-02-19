@@ -9,20 +9,45 @@ interface Props {
 }
 
 export default function CloudCamera({ onImageReady, disabled }: Props) {
-  const fileInputRef  = useRef<HTMLInputElement>(null);
+  const fileInputRef   = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
-  const [preview, setPreview] = useState<string | null>(null);
-  const [dragging, setDragging] = useState(false);
+  const [preview,    setPreview]    = useState<string | null>(null);
+  const [dragging,   setDragging]   = useState(false);
+  const [processing, setProcessing] = useState(false);
 
   const handleFile = useCallback((file: File | null) => {
     if (!file) return;
     if (!file.type.startsWith('image/')) return;
 
+    setProcessing(true);
+
     const reader = new FileReader();
     reader.onload = e => {
-      const result = e.target?.result as string;
-      setPreview(result);
-      onImageReady(result);
+      const dataUrl = e.target?.result as string;
+
+      // Compress via canvas
+      const img = document.createElement('img');
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const MAX_DIM = 1024;
+        let { width, height } = img;
+        if (width > height && width > MAX_DIM) {
+          height = Math.round((height * MAX_DIM) / width);
+          width = MAX_DIM;
+        } else if (height > MAX_DIM) {
+          width = Math.round((width * MAX_DIM) / height);
+          height = MAX_DIM;
+        }
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d')!;
+        ctx.drawImage(img, 0, 0, width, height);
+        const compressed = canvas.toDataURL('image/jpeg', 0.75);
+        setProcessing(false);
+        setPreview(compressed);
+        onImageReady(compressed);
+      };
+      img.src = dataUrl;
     };
     reader.readAsDataURL(file);
   }, [onImageReady]);
@@ -35,7 +60,7 @@ export default function CloudCamera({ onImageReady, disabled }: Props) {
 
   const clear = () => {
     setPreview(null);
-    if (fileInputRef.current)  fileInputRef.current.value = '';
+    if (fileInputRef.current)   fileInputRef.current.value = '';
     if (cameraInputRef.current) cameraInputRef.current.value = '';
   };
 
@@ -71,17 +96,30 @@ export default function CloudCamera({ onImageReady, disabled }: Props) {
               ? 'border-sky-400 bg-sky-100/80 scale-105'
               : 'border-sky-300 bg-white/30 hover:bg-white/50'}
           `}
-          onClick={() => fileInputRef.current?.click()}
+          onClick={() => !processing && fileInputRef.current?.click()}
           role="button"
           tabIndex={0}
-          onKeyDown={e => e.key === 'Enter' && fileInputRef.current?.click()}
+          onKeyDown={e => e.key === 'Enter' && !processing && fileInputRef.current?.click()}
           aria-label="Upload a cloud photo"
         >
-          <span className="text-6xl">🌤️</span>
-          <p className="font-black text-sky-700 text-lg text-center px-4">
-            Drag a sky photo<br />or tap to pick
-          </p>
-          <p className="text-sky-500 text-sm font-semibold">JPG, PNG, WEBP supported</p>
+          {processing ? (
+            /* Processing overlay */
+            <>
+              <span className="text-5xl animate-spin">🔄</span>
+              <p className="font-black text-sky-700 text-lg text-center px-4">
+                Processing…
+              </p>
+              <p className="text-sky-500 text-sm font-semibold">Compressing your photo</p>
+            </>
+          ) : (
+            <>
+              <span className="text-6xl">🌤️</span>
+              <p className="font-black text-sky-700 text-lg text-center px-4">
+                Drag a sky photo<br />or tap to pick
+              </p>
+              <p className="text-sky-500 text-sm font-semibold">JPG, PNG, WEBP supported</p>
+            </>
+          )}
         </div>
       )}
 
@@ -90,7 +128,7 @@ export default function CloudCamera({ onImageReady, disabled }: Props) {
         {/* Camera (mobile) */}
         <button
           onClick={() => cameraInputRef.current?.click()}
-          disabled={disabled}
+          disabled={disabled || processing}
           className="
             flex flex-col items-center gap-1 py-4 px-3 rounded-2xl
             bg-yellow-400 hover:bg-yellow-300 active:scale-95
@@ -105,7 +143,7 @@ export default function CloudCamera({ onImageReady, disabled }: Props) {
         {/* Gallery */}
         <button
           onClick={() => fileInputRef.current?.click()}
-          disabled={disabled}
+          disabled={disabled || processing}
           className="
             flex flex-col items-center gap-1 py-4 px-3 rounded-2xl
             bg-sky-400 hover:bg-sky-300 active:scale-95

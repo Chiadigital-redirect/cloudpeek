@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
 
+export const maxDuration = 30; // seconds — extends Vercel serverless timeout
+
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 const SYSTEM_PROMPT = `You are CloudPeek's friendly cloud expert AI for kids! 
@@ -39,6 +41,14 @@ export async function POST(req: NextRequest) {
 
     if (!imageBase64) {
       return NextResponse.json({ error: 'No image provided' }, { status: 400 });
+    }
+
+    // Guard against oversized payloads (Vercel limit is ~4.5 MB)
+    if (imageBase64.length > 5_000_000) {
+      return NextResponse.json(
+        { error: 'Image too large — please use a smaller photo', found: false },
+        { status: 413 },
+      );
     }
 
     // Strip data URL prefix if present
